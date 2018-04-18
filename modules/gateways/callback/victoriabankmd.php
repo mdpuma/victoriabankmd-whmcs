@@ -40,33 +40,12 @@ if (!$gatewayParams['type']) {
 // Varies per payment gateway
 $success = $_POST["ACTION"];
 $invoiceId = $_POST["ORDER"];
-$terminalId = $_POST["49802477"];
+$terminalId = $_POST["TERMINAL"];
 $paymentAmount = $_POST["AMOUNT"];
 $hash = $_POST["P_SIGN"];
 $transactionId = $_POST['TERMINAL'].'-'.$_POST['ORDER'];
 
-//     [Function] => TransResponse
-//     [TERMINAL] => 49802477
-//     [TRTYPE] => 0
-//     [ORDER] => 123690
-//     [AMOUNT] => 13.68
-//     [CURRENCY] => MDL
-//     [ACTION] => 3
-//     [RC] => -17
-//     [TEXT] => Access denied
-//     [APPROVAL] => 
-//     [RRN] => 
-//     [INT_REF] => 
-//     [TIMESTAMP] => 20180329141818
-//     [NONCE] => 11101000100110
-//     [P_SIGN] => 5C84974FEA60FAEFE95CA1F2C41AE636918E772BB045CD9BEA26DE0C8BB70E2AE162FF16A9BFD9FE073259B2C5A9CBB03B9E8B60D163BF59EAC2A4766291B2213926C1DAD8359D0544ECF6CAC938BEB69429A02A9FBC92A2D3FB8683646203168EBC3A16F292FB6CDBAB72CA44751DCBDBA162FD6C1BA3B66869596BFEC2E3AB143742EE7D8591DBD0BAB23BE0D7FBBC3AD4A899CD253EE0A1F26262DC67C8C72FCCB1DB9557B7E9BAF80BCAB9B5B24D788C6C7DCA445EEB17E969A3EE617001ACE8B2627FB04A2356EC97B579BE624F800B15E6235CB2AAFB65633F67E063D51B6EACA3B155F8D1C0CAF3B5D3BBC3F26917726B489C704DC35A1CD119962409
-//     [BIN] => 
-//     [CARD] => 4779XXXXXXXX1488
-//     [AUTH] => 
-//     [ECI] => 
-
-$postdata = file_get_contents("php://input");
-error_log("postarray=".print_r($_POST, true), 3, "error_log");
+// error_log("postarray=".print_r($_POST, true), 3, "error_log");
 
 $transactionStatus = ($success==0 ? 'Success' : 'Failure');
 
@@ -83,7 +62,7 @@ $transactionStatus = ($success==0 ? 'Success' : 'Failure');
  * @param int $invoiceId Invoice ID
  * @param string $gatewayName Gateway Name
  */
-$invoiceId = checkCbInvoiceID($invoiceId/10, $gatewayParams['name']);
+$invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
 
 /**
  * Check Callback Transaction ID.
@@ -135,7 +114,6 @@ if ($success == 0) {
     $payed = $invoice_data['total'];
     $fees  = $payed * 0.03;
     
-    // здесь осуществляем обработку данного платежа
     localAPI('addInvoicePayment', array(
         'invoiceid' => (int) $invoiceId,
         'transid' => $transactionId,
@@ -143,15 +121,32 @@ if ($success == 0) {
         'fees' => $fees,
         'gateway' => $gatewayParams['paymentmethod']
     ), $gatewayParams['localapi_user']);
-
+    
+    // get client details
+    $client_data = localAPI('GetClientsDetails', array(
+        'clientid' => (int) $invoice_data['userid'],
+    ), $gatewayParams['localapi_user']);
+    
+    $invoice_data['userid'];
+    
+    $email_variables = array(
+        'transaction_rrn' => $_POST['RRN'],
+        'transaction_approval' => $_POST['APPROVAL'],
+        'transaction_time' => date('d.m.Y H:i:s'),
+        'transaction_mn' => $gatewayParams['merchant_name'],
+        'transaction_country' => 'Moldova',
+        'transaction_website' => 'https://innovahosting.net',
+        'transaction_invoiceid' => $_POST['ORDER'],
+        'transaction_cn' => $client_data['fullname'],
+        'transaction_amount' => $_POST['AMOUNT'],
+        'transaction_currency' => $_POST['CURRENCY'],
+        'transaction_cc' => substr($_POST['CARD'], 12, 4),
+    );    
+    
     $result = localAPI('SendEmail', array(
         'messagename' => $gatewayParams['email_title'],
         'id' => $invoiceId,
-        'customvars' => base64_encode(serialize(array(
-            'transaction_rrn' => $_POST['RRN'],
-            'transaction_auth' => $_POST['AUTH'],
-            'transaction_time' => date('d.m.Y H:i:s')
-        )))
+        'customvars' => base64_encode(serialize($email_variables))
     ), $gatewayParams['localapi_user']);
     logTransaction($gatewayParams['name'], array('status'=>'Email is sent', 'result' => $result), $transactionStatus);
     

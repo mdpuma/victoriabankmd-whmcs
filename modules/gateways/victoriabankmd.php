@@ -192,16 +192,12 @@ function victoriabankmd_link($params)
 // <input type="submit" value="Submit" />
 // </form>
     
-    while(strlen($invoiceId)<6) {
-		$invoiceId=$invoiceId*10;
-    }
-    
     $offset = intval(date('O')/100);
     $timestamp = date('YmdHis', date('U')-$offset*3600);
     
     // 'TIMESTAMP' => date('YmdHis'), //  YYYYMMDDHHMMSS
     $postfields = array(
-        'AMOUNT' => $amount,
+        'AMOUNT' => (int) $amount,
         'CURRENCY' => 'MDL',
         'ORDER' => $invoiceId,
         'DESC' => $description,
@@ -220,12 +216,13 @@ function victoriabankmd_link($params)
         'LANG' => 'en', /// ?????
         'MERCH_ADDRESS' => $params['physical_address'],
     );
-    $postfields['P_SIGN'] = P_SIGN_ENCRYPT($postfields['ORDER'], $postfields['TIMESTAMP'], $postfields['TRTYPE'], $postfields['AMOUNT'], $postfields['NONCE']);
+    list($postfields['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($postfields['ORDER'], $postfields['TIMESTAMP'], $postfields['TRTYPE'], $postfields['AMOUNT'], $postfields['NONCE']);
 
     $htmlOutput = '<form method="post" action="' . $url . '">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . $v . '" />';
     }
+    $htmlOutput .= '<!--<input type="hidden" name="MAC" value="' . $MAC . '" />-->';
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
 
@@ -271,7 +268,7 @@ function P_SIGN_ENCRYPT($OrderId, $Timestamp, $trtType, $Amount, $nonce)
 	
 	$P_SIGN = bin2hex ($EncryptedBIN);
 	
-	return strtoupper ($P_SIGN);
+	return array(strtoupper ($P_SIGN), $MAC);
 }
 
 
