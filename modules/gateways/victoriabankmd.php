@@ -198,7 +198,7 @@ function victoriabankmd_link($params)
     // 'TIMESTAMP' => date('YmdHis'), //  YYYYMMDDHHMMSS
     $postfields = array(
         'AMOUNT' => (int) $amount,
-        'CURRENCY' => 'MDL',
+        'CURRENCY' => strtoupper($currencyCode),
         'ORDER' => $invoiceId,
         'DESC' => $description,
         'MERCH_NAME' => $params['merchant_name'], /// ?????
@@ -208,7 +208,7 @@ function victoriabankmd_link($params)
         'EMAIL' => $email,
         'TRTYPE' => '0',
         'COUNTRY' => strtolower($country), /// ?????
-        'NONCE' => decbin(rand(0,65535)), /// ?????
+        'NONCE' => generate_nonce(), /// ?????
         'BACKREF' => $systemUrl.'/paymentok.php',
         'MERCH_GMT' => intval(date('O')/100),
         'TIMESTAMP' => $timestamp,
@@ -227,6 +227,14 @@ function victoriabankmd_link($params)
     $htmlOutput .= '</form>';
 
     return $htmlOutput;
+}
+
+function generate_nonce() {
+	$result='';
+	for($i=0; $i<20; $i++) {
+		$result.=rand(0,1);
+	}
+	return $result;
 }
 
 function P_SIGN_ENCRYPT($OrderId, $Timestamp, $trtType, $Amount, $nonce)
