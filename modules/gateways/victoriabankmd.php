@@ -165,32 +165,7 @@ function victoriabankmd_link($params)
     $moduleDisplayName = $params['name'];
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
-
-    // Return HTML form for redirecting user to 3D Auth.
-
     $url = $params['post_url'];
-
-//     <form action="https://egateway.victoriabank.md/cgi-bin/cgi_link?" method="post">
-// AMOUNT	<input value="1"name="AMOUNT" /><br />
-// CURRENCY	<input value="MDL" name="CURRENCY" /><br />
-// ORDER	<input value="" name="ORDER" /><br />
-// DESC	<input value="test" name="DESC" /><br />
-// MERCH_NAME	<input value="Magazin SRL" name="MERCH_NAME" /><br />
-// MERCH_URL	<input value="www.test.md" name="MERCH_URL" /><br />
-// MERCHANT	<input value="498000049801234" name="MERCHANT" /><br />
-// TERMINAL	<input value="49801234" name="TERMINAL" /><br />
-// EMAIL	<input value="test@test.md" name="EMAIL" /><br />
-// TRTYPE	<input value="0" name="TRTYPE" /><br />
-// COUNTRY	<input value="md" name="COUNTRY" /><br />
-// NONCE	<input value="11111111000000011111" name="NONCE" /><br />
-// BACKREF	<input value="http://www.test.md/" name="BACKREF" /><br />
-// MERCH_GMT <input value="2" name="MERCH_GMT" /><br />
-// TIMESTAMP <input value="20110627060100" name="TIMESTAMP" /><br />
-// P_SIGN <input value="" name="P_SIGN" /><br />
-// LANG <input value="en" name="LANG" /><br />
-// MERCH_ADDRESS <input value="" name="MERCH_ADDRESS" /><br />
-// <input type="submit" value="Submit" />
-// </form>
     
     $offset = intval(date('O')/100);
     $timestamp = date('YmdHis', date('U')-$offset*3600);
@@ -201,19 +176,19 @@ function victoriabankmd_link($params)
         'CURRENCY' => strtoupper($currencyCode),
         'ORDER' => $invoiceId,
         'DESC' => $description,
-        'MERCH_NAME' => $params['merchant_name'], /// ?????
-        'MERCH_URL' => $systemUrl, /// ?????
+        'MERCH_NAME' => $params['merchant_name'],
+        'MERCH_URL' => $systemUrl,
         'MERCHANT' => $params['card_acceptor_id'],
         'TERMINAL' => $params['terminal_id'],
         'EMAIL' => $email,
         'TRTYPE' => '0',
-        'COUNTRY' => strtolower($country), /// ?????
-        'NONCE' => generate_nonce(), /// ?????
+        'COUNTRY' => strtolower($country),
+        'NONCE' => generate_nonce(),
         'BACKREF' => $systemUrl.'/paymentok.php',
-        'MERCH_GMT' => intval(date('O')/100),
+        'MERCH_GMT' => $offset,
         'TIMESTAMP' => $timestamp,
-        'P_SIGN' => '', /// ?????
-        'LANG' => 'en', /// ?????
+        'P_SIGN' => '',
+        'LANG' => 'en',
         'MERCH_ADDRESS' => $params['physical_address'],
     );
     list($postfields['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($postfields['ORDER'], $postfields['TIMESTAMP'], $postfields['TRTYPE'], $postfields['AMOUNT'], $postfields['NONCE']);
@@ -240,7 +215,7 @@ function generate_nonce() {
 function P_SIGN_ENCRYPT($OrderId, $Timestamp, $trtType, $Amount, $nonce)
 {
 	$MAC  = '';
-	$RSA_KeyPath = 'modules/gateways/secure/my_private.key';
+	$RSA_KeyPath = __DIR__.'/secure/my_private.key';
 	if(!is_file($RSA_KeyPath)) return 'Inexistent private key file';
 	$RSA_Key = file_get_contents ($RSA_KeyPath);
 	$Data = array (

@@ -33,7 +33,7 @@ $gatewayParams = getGatewayVariables($gatewayModuleName);
 
 // Die if module is not active.
 if (!$gatewayParams['type']) {
-    die("Module Not Activated");
+	die("Module Not Activated");
 }
 
 // Retrieve data returned in payment gateway callback
@@ -76,80 +76,133 @@ $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
  */
 checkCbTransID($transactionId);
 
-/**
- * Log Transaction.
- *
- * Add an entry to the Gateway Log for debugging purposes.
- *
- * The debug data can be a string or an array. In the case of an
- * array it will be
- *
- * @param string $gatewayName        Display label
- * @param string|array $debugData    Data to log
- * @param string $transactionStatus  Status
- */
-logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
-
 $paymentSuccess = false;
 
 if ($success == 0) {
+	$invoice_data = localAPI('GetInvoice', array(
+		'invoiceid' => $invoiceId
+	), $gatewayParams['localapi_user']);
+	
+	$client_data = localAPI('GetClientsDetails', array(
+		'clientid' => (int) $invoice_data['userid'],
+	), $gatewayParams['localapi_user']);
+	
+	$payed = $invoice_data['total'];
+	$fees  = $payed * 0.03;
+	
+	if($_POST['TRTYPE'] == 0) {
+		/**
+		* Add Invoice Payment.
+		*
+		* Applies a payment transaction entry to the given invoice ID.
+		*
+		* @param int $invoiceId		 Invoice ID
+		* @param string $transactionId  Transaction ID
+		* @param float $paymentAmount   Amount paid (defaults to full balance)
+		* @param float $paymentFee	  Payment fee (optional)
+		* @param string $gatewayModule  Gateway module name
+		*/
+		localAPI('addInvoicePayment', array(
+			'invoiceid' => (int) $invoiceId,
+			'transid' => $transactionId,
+			'payed' => $payed,
+			'fees' => $fees,
+			'gateway' => $gatewayParams['paymentmethod']
+		), $gatewayParams['localapi_user']);
+		
+		$_POST['clientid'] = $client_data['userid'];
+		$_POST['invoiceid'] = $invoiceId;
+		
+		/**
+		* Log Transaction.
+		*
+		* Add an entry to the Gateway Log for debugging purposes.
+		*
+		* The debug data can be a string or an array. In the case of an
+		* array it will be
+		*
+		* @param string $gatewayName		Display label
+		* @param string|array $debugData	Data to log
+		* @param string $transactionStatus  Status
+		*/
+		logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
+		
+		// send email check
+		$email_variables = array(
+			'transaction_rrn' => $_POST['RRN'],
+			'transaction_approval' => $_POST['APPROVAL'],
+			'transaction_time' => date('d.m.Y H:i:s'),
+			'transaction_mn' => $gatewayParams['merchant_name'],
+			'transaction_country' => 'Moldova',
+			'transaction_website' => 'https://innovahosting.net',
+			'transaction_invoiceid' => $_POST['ORDER'],
+			'transaction_cn' => $client_data['fullname'],
+			'transaction_amount' => $_POST['AMOUNT'],
+			'transaction_currency' => $_POST['CURRENCY'],
+			'transaction_cc' => substr($_POST['CARD'], 12, 4),
+		);	
+		
+		$result = localAPI('SendEmail', array(
+			'messagename' => $gatewayParams['email_title'],
+			'id' => $invoiceId,
+			'customvars' => base64_encode(serialize($email_variables))
+		), $gatewayParams['localapi_user']);
+		if($result['result'] !== 'success') {
+			logTransaction($gatewayParams['name'], array('action'=>'email_check_sending', 'result' => $result), $transactionStatus);
+		}
+		
+		// notify bank about finishing transaction
+		$bank_response = completion_response($gatewayParams, $client_data, $_POST);
+		logTransaction($gatewayParams['name'], array('action'=>'completion_response', 'request' => $bank_response['request'], 'result' => $bank_response['response']), $transactionStatus);
+	}
+	
+	$paymentSuccess = true;
+} else {
+	logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
+}
 
-    /**
-     * Add Invoice Payment.
-     *
-     * Applies a payment transaction entry to the given invoice ID.
-     *
-     * @param int $invoiceId         Invoice ID
-     * @param string $transactionId  Transaction ID
-     * @param float $paymentAmount   Amount paid (defaults to full balance)
-     * @param float $paymentFee      Payment fee (optional)
-     * @param string $gatewayModule  Gateway module name
-     */
-     
-     
-    $invoice_data = localAPI('GetInvoice', array(
-        'invoiceid' => $invoiceId
-    ), $gatewayParams['localapi_user']);
-    
-    $payed = $invoice_data['total'];
-    $fees  = $payed * 0.03;
-    
-    localAPI('addInvoicePayment', array(
-        'invoiceid' => (int) $invoiceId,
-        'transid' => $transactionId,
-        'payed' => $payed,
-        'fees' => $fees,
-        'gateway' => $gatewayParams['paymentmethod']
-    ), $gatewayParams['localapi_user']);
-    
-    // get client details
-    $client_data = localAPI('GetClientsDetails', array(
-        'clientid' => (int) $invoice_data['userid'],
-    ), $gatewayParams['localapi_user']);
-    
-    $invoice_data['userid'];
-    
-    $email_variables = array(
-        'transaction_rrn' => $_POST['RRN'],
-        'transaction_approval' => $_POST['APPROVAL'],
-        'transaction_time' => date('d.m.Y H:i:s'),
-        'transaction_mn' => $gatewayParams['merchant_name'],
-        'transaction_country' => 'Moldova',
-        'transaction_website' => 'https://innovahosting.net',
-        'transaction_invoiceid' => $_POST['ORDER'],
-        'transaction_cn' => $client_data['fullname'],
-        'transaction_amount' => $_POST['AMOUNT'],
-        'transaction_currency' => $_POST['CURRENCY'],
-        'transaction_cc' => substr($_POST['CARD'], 12, 4),
-    );    
-    
-    $result = localAPI('SendEmail', array(
-        'messagename' => $gatewayParams['email_title'],
-        'id' => $invoiceId,
-        'customvars' => base64_encode(serialize($email_variables))
-    ), $gatewayParams['localapi_user']);
-    logTransaction($gatewayParams['name'], array('status'=>'Email is sent', 'result' => $result), $transactionStatus);
-    
-    $paymentSuccess = true;
-
+function completion_response($gateway, $client_data, $data) {
+	$offset = intval(date('O')/100);
+	$timestamp = date('YmdHis', date('U')-$offset*3600);
+	
+	$array = array(
+		'ORDER'		=> $data['ORDER'],
+		'AMOUNT'	=> $data['AMOUNT'],
+		'CURRENCY'	=> $data['CURRENCY'],
+		'RRN'		=> $data['RRN'],
+		'INT_REF'	=> $data['INT_REF'],
+		'TRTYPE'	=> 21,
+		'TERMINAL'	=> $gateway['terminal_id'],
+		'TIMESTAMP'	=> $timestamp,
+		'MERCH_GMT' => $offset,
+		'NONCE'		=> generate_nonce(),
+		'P_SIGN'	=> '',
+		
+		'DESC' => 'Servicii hosting',
+		'MERCH_URL' => $gateway['systemurl'],
+		'EMAIL' => $client_data['email'],
+		'COUNTRY' => strtolower($client_data['countrycode']),
+		'BACKREF' => $gateway['systemurl'],
+		'MERCH_NAME' => $gateway['merchant_name'],
+		'MERCHANT' => $gateway['card_acceptor_id'],
+		'TERMINAL' => $gateway['terminal_id'],
+		'LANG' => 'en',
+		'MERCH_ADDRESS' => $gateway['physical_address'],
+	);
+	
+	list($array['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($array['ORDER'], $array['TIMESTAMP'], $array['TRTYPE'], $array['AMOUNT'], $array['NONCE']);
+	
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $gateway['post_url']);
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($array));
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+	$result = curl_exec($ch);
+	curl_close($ch);
+	
+	$array['MAC'] = $MAC;
+	return array('request' => $array, 'response' => $result);
 }
