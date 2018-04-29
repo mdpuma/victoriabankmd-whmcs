@@ -37,15 +37,12 @@ if (!$gatewayParams['type']) {
 }
 
 // Retrieve data returned in payment gateway callback
-// Varies per payment gateway
 $success = $_POST["ACTION"];
 $invoiceId = $_POST["ORDER"];
 $terminalId = $_POST["TERMINAL"];
 $paymentAmount = $_POST["AMOUNT"];
 $hash = $_POST["P_SIGN"];
-$transactionId = $_POST['TERMINAL'].'-'.$_POST['ORDER'];
-
-// error_log("postarray=".print_r($_POST, true), 3, "error_log");
+$transactionId = $_POST['ORDER'].'-'.$_POST['RRN'].'-'.$_POST['INT_REF'];
 
 $transactionStatus = ($success==0 ? 'Success' : 'Failure');
 

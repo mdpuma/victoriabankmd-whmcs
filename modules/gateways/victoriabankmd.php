@@ -22,7 +22,7 @@
  */
 
 if (!defined("WHMCS")) {
-    die("This file cannot be accessed directly");
+	die("This file cannot be accessed directly");
 }
 
 /**
@@ -37,12 +37,12 @@ if (!defined("WHMCS")) {
  */
 function victoriabankmd_MetaData()
 {
-    return array(
-        'DisplayName' => 'Victoria Ecommerce',
-        'APIVersion' => '1.1', // Use API Version 1.1
-        'DisableLocalCreditCardInput' => false,
-        'TokenisedStorage' => false,
-    );
+	return array(
+		'DisplayName' => 'Victoria Ecommerce',
+		'APIVersion' => '1.1', // Use API Version 1.1
+		'DisableLocalCreditCardInput' => false,
+		'TokenisedStorage' => false,
+	);
 }
 
 /**
@@ -69,140 +69,233 @@ function victoriabankmd_MetaData()
  */
 function victoriabankmd_config()
 {
-    return array(
-        // the friendly display name for a payment gateway should be
-        // defined here for backwards compatibility
-        'FriendlyName' => array(
-            'Type' => 'System',
-            'Value' => 'Victoria bank eCommerce',
-        ),
-        // a text field type allows for single line text input
-        'terminal_id' => array(
-            'FriendlyName' => 'Terminal ID',
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => '',
-        ),
-        // a password field type allows for masked text input
-        'card_acceptor_id' => array(
-            'FriendlyName' => 'Card Acceptor ID',
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => '',
-        ),
-        // a password field type allows for masked text input
-        'post_url' => array(
-            'FriendlyName' => 'eCommerce URL',
-            'Type' => 'text',
-            'Size' => '30',
-            'Default' => '',
-            'Description' => '',
-        ),
-        'physical_address' => array(
-            'FriendlyName' => 'Physical office address',
-            'Type' => 'text',
-            'Size' => '64',
-            'Default' => '',
-            'Description' => '',
-        ),
-        'merchant_name' => array(
-            'FriendlyName' => 'Merchant Name',
-            'Type' => 'text',
-            'Size' => '64',
-            'Default' => '',
-            'Description' => 'This is informative merchant name on gateway',
-        ),
-        "localapi_user" => array(
-            "FriendlyName" => "Username for LocalAPI",
-            "Type" => "text",
-            "Size" => "50",
-            "Description" => "Read more here https://developers.whmcs.com/api/internal-api/"
-        ),
-        "email_title" => array(
-            "FriendlyName" => "Name of the client email template for electronic check",
-            "Type" => "text",
-            "Size" => "50",
-            "Description" => "Name of email template for electronic check <a href='admin/configemailtemplates.php'>Email Templates</a>"
-        )
-    );
+	return array(
+		'FriendlyName' => array(
+			'Type' => 'System',
+			'Value' => 'Victoria bank eCommerce',
+		),
+		'terminal_id' => array(
+			'FriendlyName' => 'Terminal ID',
+			'Type' => 'text',
+			'Size' => '25',
+			'Default' => '',
+			'Description' => '',
+		),
+		'card_acceptor_id' => array(
+			'FriendlyName' => 'Card Acceptor ID',
+			'Type' => 'text',
+			'Size' => '25',
+			'Default' => '',
+			'Description' => '',
+		),
+		'post_url' => array(
+			'FriendlyName' => 'eCommerce URL',
+			'Type' => 'text',
+			'Size' => '30',
+			'Default' => '',
+			'Description' => '',
+		),
+		'physical_address' => array(
+			'FriendlyName' => 'Physical office address',
+			'Type' => 'text',
+			'Size' => '64',
+			'Default' => '',
+			'Description' => '',
+		),
+		'merchant_name' => array(
+			'FriendlyName' => 'Merchant Name',
+			'Type' => 'text',
+			'Size' => '64',
+			'Default' => '',
+			'Description' => 'This is informative merchant name on gateway',
+		),
+		"localapi_user" => array(
+			"FriendlyName" => "Username for LocalAPI",
+			"Type" => "text",
+			"Size" => "50",
+			"Description" => "Read more here https://developers.whmcs.com/api/internal-api/"
+		),
+		"email_title" => array(
+			"FriendlyName" => "Name of the client email template for electronic check",
+			"Type" => "text",
+			"Size" => "50",
+			"Description" => "Name of email template for electronic check <a href='admin/configemailtemplates.php'>Email Templates</a>"
+		)
+	);
 }
 
 function victoriabankmd_link($params)
 {
-    // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
+	// Gateway Configuration Parameters
+	$accountId = $params['accountID'];
+	$secretKey = $params['secretKey'];
+	$testMode = $params['testMode'];
+	$dropdownField = $params['dropdownField'];
+	$radioField = $params['radioField'];
+	$textareaField = $params['textareaField'];
 
-    // Invoice Parameters
-    $invoiceId = $params['invoiceid'];
-    $description = $params["description"];
-    $amount = $params['amount'];
-    $currencyCode = $params['currency'];
-    
-    // Client Parameters
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clTerminalientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
+	// Invoice Parameters
+	$invoiceId = $params['invoiceid'];
+	$description = $params["description"];
+	$amount = $params['amount'];
+	$currencyCode = $params['currency'];
+	
+	// Client Parameters
+	$firstname = $params['clientdetails']['firstname'];
+	$lastname = $params['clientdetails']['lastname'];
+	$email = $params['clientdetails']['email'];
+	$address1 = $params['clientdetails']['address1'];
+	$address2 = $params['clTerminalientdetails']['address2'];
+	$city = $params['clientdetails']['city'];
+	$state = $params['clientdetails']['state'];
+	$postcode = $params['clientdetails']['postcode'];
+	$country = $params['clientdetails']['country'];
+	$phone = $params['clientdetails']['phonenumber'];
 
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $returnUrl = $params['returnurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-    $url = $params['post_url'];
-    
-    $offset = intval(date('O')/100);
-    $timestamp = date('YmdHis', date('U')-$offset*3600);
-    
-    // 'TIMESTAMP' => date('YmdHis'), //  YYYYMMDDHHMMSS
-    $postfields = array(
-        'AMOUNT' => (int) $amount,
-        'CURRENCY' => strtoupper($currencyCode),
-        'ORDER' => $invoiceId,
-        'DESC' => $description,
-        'MERCH_NAME' => $params['merchant_name'],
-        'MERCH_URL' => $systemUrl,
-        'MERCHANT' => $params['card_acceptor_id'],
-        'TERMINAL' => $params['terminal_id'],
-        'EMAIL' => $email,
-        'TRTYPE' => '0',
-        'COUNTRY' => strtolower($country),
-        'NONCE' => generate_nonce(),
-        'BACKREF' => $systemUrl.'/paymentok.php',
-        'MERCH_GMT' => $offset,
-        'TIMESTAMP' => $timestamp,
-        'P_SIGN' => '',
-        'LANG' => 'en',
-        'MERCH_ADDRESS' => $params['physical_address'],
-    );
-    list($postfields['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($postfields['ORDER'], $postfields['TIMESTAMP'], $postfields['TRTYPE'], $postfields['AMOUNT'], $postfields['NONCE']);
+	// System Parameters
+	$companyName = $params['companyname'];
+	$systemUrl = $params['systemurl'];
+	$returnUrl = $params['returnurl'];
+	$langPayNow = $params['langpaynow'];
+	$moduleDisplayName = $params['name'];
+	$moduleName = $params['paymentmethod'];
+	$whmcsVersion = $params['whmcsVersion'];
+	$url = $params['post_url'];
+	
+	$offset = intval(date('O')/100);
+	$timestamp = date('YmdHis', date('U')-$offset*3600);
+	
+	$postfields = array(
+		'AMOUNT' => $amount,
+		'CURRENCY' => strtoupper($currencyCode),
+		'ORDER' => $invoiceId,
+		'DESC' => $description,
+		'MERCH_NAME' => $params['merchant_name'],
+		'MERCH_URL' => $systemUrl,
+		'MERCHANT' => $params['card_acceptor_id'],
+		'TERMINAL' => $params['terminal_id'],
+		'EMAIL' => $email,
+		'TRTYPE' => '0',
+		'COUNTRY' => strtolower($country),
+		'NONCE' => generate_nonce(),
+		'BACKREF' => $systemUrl.'/paymentok.php',
+		'MERCH_GMT' => $offset,
+		'TIMESTAMP' => $timestamp,
+		'P_SIGN' => '',
+		'LANG' => 'en',
+		'MERCH_ADDRESS' => $params['physical_address'],
+	);
+	list($postfields['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($postfields['ORDER'], $postfields['TIMESTAMP'], $postfields['TRTYPE'], $postfields['AMOUNT'], $postfields['NONCE']);
 
-    $htmlOutput = '<form method="post" action="' . $url . '">';
-    foreach ($postfields as $k => $v) {
-        $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . $v . '" />';
-    }
-    $htmlOutput .= '<!--<input type="hidden" name="MAC" value="' . $MAC . '" />-->';
-    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
-    $htmlOutput .= '</form>';
+	$htmlOutput = '<form method="post" action="' . $url . '">';
+	foreach ($postfields as $k => $v) {
+		$htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . $v . '" />';
+	}
+	$htmlOutput .= '<!--<input type="hidden" name="MAC" value="' . $MAC . '" />-->';
+	$htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
+	$htmlOutput .= '</form>';
 
-    return $htmlOutput;
+	return $htmlOutput;
 }
+
+/**
+ * Refund transaction.
+ *
+ * Called when a refund is requested for a previously successful transaction.
+ *
+ * @param array $params Payment Gateway Module Parameters
+ *
+ * @see https://developers.whmcs.com/payment-gateways/refunds/
+ *
+ * @return array Transaction response status
+ */
+function victoriabankmd_refund($params)
+{
+// 	Transaction Parameters
+// 	$transactionIdToRefund = $params['transid'];
+// 	$refundAmount = $params['amount'];
+// 	$currencyCode = $params['currency'];
+
+//	Client Parameters
+// 	$firstname = $params['clientdetails']['firstname'];
+// 	$lastname = $params['clientdetails']['lastname'];
+// 	$email = $params['clientdetails']['email'];
+// 	$address1 = $params['clientdetails']['address1'];
+// 	$address2 = $params['clientdetails']['address2'];
+// 	$city = $params['clientdetails']['city'];
+// 	$state = $params['clientdetails']['state'];
+// 	$postcode = $params['clientdetails']['postcode'];
+// 	$country = $params['clientdetails']['country'];
+// 	$phone = $params['clientdetails']['phonenumber'];
+
+//	 System Parameters
+// 	$companyName = $params['companyname'];
+// 	$systemUrl = $params['systemurl'];
+// 	$langPayNow = $params['langpaynow'];
+// 	$moduleDisplayName = $params['name'];
+// 	$moduleName = $params['paymentmethod'];
+// 	$whmcsVersion = $params['whmcsVersion'];
+
+//	 perform API call to initiate refund and interpret result
+	list($data['ORDER'], $data['RRN'], $data['INT_REF']) = explode('-', $params['transid']);
+	
+	$offset = intval(date('O')/100);
+	$timestamp = date('YmdHis', date('U')-$offset*3600);
+	
+	$array = array(
+		'ORDER'		=> $data['ORDER'],
+		'AMOUNT'	=> $params['amount'],
+		'CURRENCY'	=> $params['currency'],
+		'RRN'		=> $data['RRN'],
+		'INT_REF'	=> $data['INT_REF'],
+		'TRTYPE'	=> 24,
+		'TERMINAL'	=> $params['terminal_id'],
+		'TIMESTAMP'	=> $timestamp,
+		'MERCH_GMT' => $offset,
+		'NONCE'		=> generate_nonce(),
+		'P_SIGN'	=> '',
+		
+		'DESC' => 'Servicii hosting',
+		'MERCH_URL' => $params['systemurl'],
+		'EMAIL' => $params['clientdetails']['email'],
+		'COUNTRY' => strtolower($params['clientdetails']['countrycode']),
+		'BACKREF' => $params['systemurl'],
+		'MERCH_NAME' => $params['merchant_name'],
+		'MERCHANT' => $params['card_acceptor_id'],
+		'TERMINAL' => $params['terminal_id'],
+		'LANG' => 'en',
+		'MERCH_ADDRESS' => $params['physical_address'],
+	);
+	
+	list($array['P_SIGN'], $MAC) = P_SIGN_ENCRYPT($array['ORDER'], $array['TIMESTAMP'], $array['TRTYPE'], $array['AMOUNT'], $array['NONCE']);
+	
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $params['post_url']);
+	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_POST, true);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($array));
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+	$result = curl_exec($ch);
+	curl_close($ch);
+	
+	$array['MAC'] = $MAC;
+	
+	logTransaction($gatewayParams['name'], array('action'=>'victoriabankmd_refund', 'request' => $array, 'result' => $result), $transactionStatus);
+	
+	return array(
+// 		'success' if successful, otherwise 'declined', 'error' for failure
+		'status' => 'success',
+// 		Data to be recorded in the gateway log - can be a string or array
+		'rawdata' => $result,
+// 		Unique Transaction ID for the refund transaction
+		'transid' => $params['transid'],
+// 		Optional fee amount for the fee value refunded
+		'fees' => $params['amount']*0.03,
+	);
+}
+
 
 function generate_nonce() {
 	$result='';
@@ -253,138 +346,3 @@ function P_SIGN_ENCRYPT($OrderId, $Timestamp, $trtType, $Amount, $nonce)
 	
 	return array(strtoupper ($P_SIGN), $MAC);
 }
-
-
-/**
- * Capture payment.
- *
- * Called when a payment is to be processed and captured.
- *
- * The card cvv number will only be present for the initial card holder present
- * transactions. Automated recurring capture attempts will not provide it.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/merchant-gateway/
- *
- * @return array Transaction response status
- */
-// function victoriabankmd_capture($params)
-// {
-//     // Gateway Configuration Parameters
-//     $accountId = $params['accountID'];
-//     $secretKey = $params['secretKey'];
-//     $testMode = $params['testMode'];
-//     $dropdownField = $params['dropdownField'];
-//     $radioField = $params['radioField'];
-//     $textareaField = $params['textareaField'];
-// 
-//     // Invoice Parameters
-//     $invoiceId = $params['invoiceid'];
-//     $description = $params["description"];
-//     $amount = $params['amount'];
-//     $currencyCode = $params['currency'];
-// 
-//     // Credit Card Parameters
-//     $cardType = $params['cardtype'];
-//     $cardNumber = $params['cardnum'];
-//     $cardExpiry = $params['cardexp'];
-//     $cardStart = $params['cardstart'];
-//     $cardIssueNumber = $params['cardissuenum'];
-//     $cardCvv = $params['cccvv'];
-// 
-//     // Client Parameters
-//     $firstname = $params['clientdetails']['firstname'];
-//     $lastname = $params['clientdetails']['lastname'];
-//     $email = $params['clientdetails']['email'];
-//     $address1 = $params['clientdetails']['address1'];
-//     $address2 = $params['clientdetails']['address2'];
-//     $city = $params['clientdetails']['city'];
-//     $state = $params['clientdetails']['state'];
-//     $postcode = $params['clientdetails']['postcode'];
-//     $country = $params['clientdetails']['country'];
-//     $phone = $params['clientdetails']['phonenumber'];
-// 
-//     // System Parameters
-//     $companyName = $params['companyname'];
-//     $systemUrl = $params['systemurl'];
-//     $returnUrl = $params['returnurl'];
-//     $langPayNow = $params['langpaynow'];
-//     $moduleDisplayName = $params['name'];
-//     $moduleName = $params['paymentmethod'];
-//     $whmcsVersion = $params['whmcsVersion'];
-// 
-//     // perform API call to capture payment and interpret result
-// 
-//     return array(
-//         // 'success' if successful, otherwise 'declined', 'error' for failure
-//         'status' => 'success',
-//         // Data to be recorded in the gateway log - can be a string or array
-//         'rawdata' => $responseData,
-//         // Unique Transaction ID for the capture transaction
-//         'transid' => $transactionId,
-//         // Optional fee amount for the fee value refunded
-//         'fees' => $feeAmount,
-//     );
-// }
-
-
-/**
- * Refund transaction.
- *
- * Called when a refund is requested for a previously successful transaction.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/refunds/
- *
- * @return array Transaction response status
- */
-// function victoriabankmd_refund($params)
-// {
-//     // Gateway Configuration Parameters
-//     $accountId = $params['accountID'];
-//     $secretKey = $params['secretKey'];
-//     $testMode = $params['testMode'];
-//     $dropdownField = $params['dropdownField'];
-//     $radioField = $params['radioField'];
-//     $textareaField = $params['textareaField'];
-// 
-//     // Transaction Parameters
-//     $transactionIdToRefund = $params['transid'];
-//     $refundAmount = $params['amount'];
-//     $currencyCode = $params['currency'];
-// 
-//     // Client Parameters
-//     $firstname = $params['clientdetails']['firstname'];
-//     $lastname = $params['clientdetails']['lastname'];
-//     $email = $params['clientdetails']['email'];
-//     $address1 = $params['clientdetails']['address1'];
-//     $address2 = $params['clientdetails']['address2'];
-//     $city = $params['clientdetails']['city'];
-//     $state = $params['clientdetails']['state'];
-//     $postcode = $params['clientdetails']['postcode'];
-//     $country = $params['clientdetails']['country'];
-//     $phone = $params['clientdetails']['phonenumber'];
-// 
-//     // System Parameters
-//     $companyName = $params['companyname'];
-//     $systemUrl = $params['systemurl'];
-//     $langPayNow = $params['langpaynow'];
-//     $moduleDisplayName = $params['name'];
-//     $moduleName = $params['paymentmethod'];
-//     $whmcsVersion = $params['whmcsVersion'];
-// 
-//     // perform API call to initiate refund and interpret result
-// 
-//     return array(
-//         // 'success' if successful, otherwise 'declined', 'error' for failure
-//         'status' => 'success',
-//         // Data to be recorded in the gateway log - can be a string or array
-//         'rawdata' => $responseData,
-//         // Unique Transaction ID for the refund transaction
-//         'transid' => $refundTransactionId,
-//         // Optional fee amount for the fee value refunded
-//         'fees' => $feeAmount,
-//     );
-// }
