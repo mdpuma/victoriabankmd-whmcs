@@ -142,7 +142,8 @@ if ($success == 0) {
 		$result = localAPI('SendEmail', array(
 			'messagename' => $gatewayParams['email_title'],
 			'id' => $invoiceId,
-			'customvars' => base64_encode(serialize($email_variables))
+			'customvars' => base64_encode(serialize($email_variables)),
+			'customtype' => 'invoice'
 		), $gatewayParams['localapi_user']);
 		if($result['result'] !== 'success') {
 			logTransaction($gatewayParams['name'], array('action'=>'email_check_sending', 'result' => $result), $transactionStatus);
