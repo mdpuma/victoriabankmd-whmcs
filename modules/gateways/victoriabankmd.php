@@ -92,8 +92,8 @@ function victoriabankmd_config()
 			'FriendlyName' => 'eCommerce URL',
 			'Type' => 'text',
 			'Size' => '30',
-			'Default' => '',
-			'Description' => '',
+			'Default' => 'https://vb059.vb.md/cgi-bin/cgi_link',
+			'Description' => 'Default URL: https://egateway.victoriabank.md/cgi-bin/cgi_link; 3D secure: https://vb059.vb.md/cgi-bin/cgi_link',
 		),
 		'physical_address' => array(
 			'FriendlyName' => 'Physical office address',
