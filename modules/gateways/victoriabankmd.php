@@ -25,6 +25,8 @@ if (!defined("WHMCS")) {
 	die("This file cannot be accessed directly");
 }
 
+use WHMCS\Database\Capsule;
+
 /**
  * Define module related meta data.
  *
@@ -165,6 +167,38 @@ function victoriabankmd_link($params)
 	$offset = intval(date('O')/100);
 	$timestamp = date('YmdHis', date('U')-$offset*3600);
 	
+	//check if there is transaction for same order with RRN
+	$i=0;
+	do {
+		$rrn_exists = false;
+		$rrn_array = Capsule::table('mod_victoriabank_transactions')->select('rrn')->where('orderid','=',$invoiceId)->get();
+		if(count($rrn_array) == 1) {
+			$last_rrn = intval($rrn_array[0]->rrn);
+			if($last_rrn == 0) {
+				$rrn_exists = false;
+				break;
+			}
+			$rrn_exists=true;
+			if($i==0) {
+				$invoiceId = $invoiceId*10;
+			} else {
+				$invoiceId++;
+			}
+			$i++;
+		} else {
+			$rrn_exists = false;
+		}
+	} while($rrn_exists == true && $i < 10);
+	
+	if($rrn_exists == false && $last_rrn !== 0) {
+		Capsule::table('mod_victoriabank_transactions')->insert(
+		[
+			'pending' => 1,
+			'orderid' => $invoiceId,
+			'invoiceid' => $params['invoiceid']
+		]);
+	}
+	
 	$postfields = array(
 		'AMOUNT' => $amount,
 		'CURRENCY' => strtoupper($currencyCode),
@@ -282,7 +316,7 @@ function victoriabankmd_refund($params)
 	
 	$array['MAC'] = $MAC;
 	
-	logTransaction($gatewayParams['name'], array('action'=>'victoriabankmd_refund', 'request' => $array, 'result' => $result), $transactionStatus);
+	logTransaction($params['name'], array('action'=>'victoriabankmd_refund', 'request' => $array, 'result' => $result), $transactionStatus);
 	
 	return array(
 // 		'success' if successful, otherwise 'declined', 'error' for failure

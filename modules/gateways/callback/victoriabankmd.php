@@ -21,9 +21,13 @@
  */
 
 // Require libraries needed for gateway module functions.
+
+
 require_once __DIR__ . '/../../../init.php';
 $whmcs->load_function('gateway');
 $whmcs->load_function('invoice');
+
+use WHMCS\Database\Capsule;
 
 // Detect module name from filename.
 $gatewayModuleName = basename(__FILE__, '.php');
@@ -59,6 +63,13 @@ $transactionStatus = ($success==0 ? 'Success' : 'Failure');
  * @param int $invoiceId Invoice ID
  * @param string $gatewayName Gateway Name
  */
+
+$transaction = Capsule::table('mod_victoriabank_transactions')->select('*')->where('orderid','=', $_POST["ORDER"])->limit(1)->get();
+if(count($transaction)) {
+	if($transaction[0]->orderid !== $transaction[0]->invoiceid) {
+		$invoiceId = $transaction[0]->invoiceid;
+	}
+}
 $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
 
 /**
@@ -143,7 +154,7 @@ if ($success == 0) {
 			'messagename' => $gatewayParams['email_title'],
 			'id' => $invoiceId,
 			'customvars' => base64_encode(serialize($email_variables)),
-			'customtype' => 'invoice'
+// 			'customtype' => 'invoice'
 		), $gatewayParams['localapi_user']);
 		if($result['result'] !== 'success') {
 			logTransaction($gatewayParams['name'], array('action'=>'email_check_sending', 'result' => $result), $transactionStatus);
@@ -157,6 +168,21 @@ if ($success == 0) {
 	$paymentSuccess = true;
 } else {
 	logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
+}
+
+// log creditcard transaction
+if($_POST['TRTYPE'] == 0) {
+	Capsule::table('mod_victoriabank_transactions')->where('orderid','=',$_POST['ORDER'])->update(
+		[
+			'bin' => $_POST['BIN'],
+			'card' => $_POST['CARD'],
+			'rrn' => $_POST['RRN'],
+			'text' => $_POST['TEXT'],
+			'invoiceid' => $invoiceId,
+			'pending' => 0,
+			'timestamp' => Capsule::raw('CURRENT_TIMESTAMP()')
+		]
+	);
 }
 
 function completion_response($gateway, $client_data, $data) {
