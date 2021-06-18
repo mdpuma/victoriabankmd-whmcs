@@ -169,28 +169,36 @@ function victoriabankmd_link($params)
 	
 	//check if there is transaction for same order with RRN
 	$i=0;
+	$new_order_id = false;
+	$first_attempt = false;
 	do {
 		$rrn_exists = false;
-		$rrn_array = Capsule::table('mod_victoriabank_transactions')->select('rrn')->where('orderid','=',$invoiceId)->get();
+		$rrn_array = Capsule::table('mod_victoriabank_transactions')->select('rrn','text','pending')->where('orderid','=',$invoiceId)->get();
 		if(count($rrn_array) == 1) {
 			$last_rrn = intval($rrn_array[0]->rrn);
-			if($last_rrn == 0) {
+			$last_text = $rrn_array[0]->text;
+			$is_pending = intval($rrn_array[0]->pending);
+			if($is_pending == 1) {
 				$rrn_exists = false;
+				$new_order_id = false;
 				break;
 			}
 			$rrn_exists=true;
+			$new_order_id=true;
 			if($i==0) {
 				$invoiceId = $invoiceId*10;
 			} else {
 				$invoiceId++;
 			}
-			$i++;
 		} else {
-			$rrn_exists = false;
+			$new_order_id=true;
+			if($i==0) $first_attempt = true;
+			break;
 		}
+		$i++;
 	} while($rrn_exists == true && $i < 10);
 	
-	if($rrn_exists == false && $last_rrn !== 0) {
+	if($new_order_id == true || $first_attempt == true) {
 		Capsule::table('mod_victoriabank_transactions')->insert(
 		[
 			'pending' => 1,
@@ -273,12 +281,31 @@ function victoriabankmd_refund($params)
 //	 perform API call to initiate refund and interpret result
 	list($data['ORDER'], $data['RRN'], $data['INT_REF']) = explode('-', $params['transid']);
 	
+// 	$invoice_data = localAPI('GetInvoice', array(
+// 		'invoiceid' => $params['invoiceid']
+// 	), $params['localapi_user']);
+	
+	$transaction_data = localAPI('GetTransactions', array(
+		'transid' => $params['transid']
+	), $params['localapi_user']);
+	
+	if($transaction_data['totalresults'] !== 1) {
+		logTransaction($params['name'], array('action'=>'victoriabankmd_refund', 'request' => array(), 'result' => array('error'=>'Cant find transaction by id'), 'Failed'));
+		return;
+	}
+	
+	$amount = $transaction_data['transactions']['transaction'][0]['amountin'];
+	
+// 	var_dump($params);
+// 	var_dump($transaction_data);
+// 	var_dump($invoice_data);
+	
 	$offset = intval(date('O')/100);
 	$timestamp = date('YmdHis', date('U')-$offset*3600);
 	
 	$array = array(
 		'ORDER'		=> $data['ORDER'],
-		'AMOUNT'	=> $params['amount'],
+		'AMOUNT'	=> $amount,
 		'CURRENCY'	=> $params['currency'],
 		'RRN'		=> $data['RRN'],
 		'INT_REF'	=> $data['INT_REF'],
@@ -315,6 +342,8 @@ function victoriabankmd_refund($params)
 	curl_close($ch);
 	
 	$array['MAC'] = $MAC;
+	
+	// Referenced Transaction was successfully reversed
 	
 	logTransaction($params['name'], array('action'=>'victoriabankmd_refund', 'request' => $array, 'result' => $result), $transactionStatus);
 	
